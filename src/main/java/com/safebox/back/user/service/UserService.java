@@ -1,10 +1,10 @@
-package com.safebox.back.member.service;
+package com.safebox.back.user.service;
 
-import com.safebox.back.member.dto.LoginDto;
-import com.safebox.back.member.dto.SignUpDto;
+import com.safebox.back.user.dto.LoginDto;
+import com.safebox.back.user.dto.SignUpDto;
 import com.safebox.back.util.ResponseDto;
 
-public interface MemberService {
+public interface UserService {
     /**
      * 
      * @param signUpDto 회원가입 정보 담긴 dto
