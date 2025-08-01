@@ -11,7 +11,7 @@ public class SignUpDto {
     @NotNull
     private String email;
     @NotNull
-    private String userId;
+    private String loginId;
     @NotNull
     private String password;
 }
