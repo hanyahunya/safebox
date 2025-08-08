@@ -1,5 +1,7 @@
 package com.safebox.back.token;
 
+import com.safebox.back.user.Role;
+
 import java.util.Date;
 
 public interface JwtTokenService {
@@ -8,7 +10,7 @@ public interface JwtTokenService {
      * @param loginId 사용자 로그인 ID
      * @return 생성된 JWT 토큰
      */
-    String generateToken(String loginId);
+    String generateToken(String loginId, Role role);
 
     /**
      * JWT 토큰 유효성 검증

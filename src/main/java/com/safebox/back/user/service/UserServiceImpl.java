@@ -2,6 +2,7 @@ package com.safebox.back.user.service;
 
 import com.safebox.back.token.JwtTokenService;
 import com.safebox.back.token.JwtTokenException;
+import com.safebox.back.user.Role;
 import com.safebox.back.user.dto.LoginDto;
 import com.safebox.back.user.dto.SignUpDto;
 import com.safebox.back.user.entity.User;
@@ -50,6 +51,7 @@ public class UserServiceImpl implements UserService {
                     .email(signUpDto.getEmail())
                     .loginId(signUpDto.getLoginId())
                     .password(encodedPassword)
+                    .role(Role.USER)
                     .build();
 
             userRepository.save(user);
@@ -83,7 +85,7 @@ public class UserServiceImpl implements UserService {
             }
 
             // 3. JWT 토큰 생성
-            String jwtToken = jwtTokenService.generateToken(user.getId());
+            String jwtToken = jwtTokenService.generateToken(user.getId(), user.getRole());
             log.info("로그인 성공 - 사용자 ID: {}", loginDto.getLoginId());
 
             return ResponseDto.success("로그인 성공", jwtToken);

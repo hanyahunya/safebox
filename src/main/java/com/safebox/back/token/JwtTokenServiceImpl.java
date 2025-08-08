@@ -1,5 +1,6 @@
 package com.safebox.back.token;
 
+import com.safebox.back.user.Role;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
      * JWT 토큰 생성
      */
     @Override
-    public String generateToken(String userId) {
+    public String generateToken(String userId, Role role) {
         try {
             Date now = new Date();
             Date expiryDate = new Date(now.getTime() + expirationMs);
@@ -44,6 +45,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
                     .setIssuedAt(now)
                     .setExpiration(expiryDate)
                     .claim("user_id", userId)
+                    .claim("role", role)
                     .claim("tokenType", "ACCESS_TOKEN")
                     .signWith(secretKey, SignatureAlgorithm.HS512)
                     .compact();
@@ -149,7 +151,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
         invalidateToken(token);
 
         // 새 토큰 생성 및 반환
-        return generateToken(loginId);
+        return generateToken(loginId, Role.USER);
     }
 
     /**
