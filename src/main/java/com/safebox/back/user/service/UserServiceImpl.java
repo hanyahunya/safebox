@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -43,6 +45,7 @@ public class UserServiceImpl implements UserService {
 
             // 4. 엔티티 생성 및 저장
             User user = User.builder()
+                    .id(UUID.randomUUID().toString())
                     .name(signUpDto.getName())
                     .email(signUpDto.getEmail())
                     .loginId(signUpDto.getLoginId())
@@ -80,7 +83,7 @@ public class UserServiceImpl implements UserService {
             }
 
             // 3. JWT 토큰 생성
-            String jwtToken = jwtTokenService.generateToken(user.getLoginId());
+            String jwtToken = jwtTokenService.generateToken(user.getId());
             log.info("로그인 성공 - 사용자 ID: {}", loginDto.getLoginId());
 
             return ResponseDto.success("로그인 성공", jwtToken);

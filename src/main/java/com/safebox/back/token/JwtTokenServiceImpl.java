@@ -34,25 +34,24 @@ public class JwtTokenServiceImpl implements JwtTokenService {
      * JWT 토큰 생성
      */
     @Override
-    public String generateToken(String loginId) {
+    public String generateToken(String userId) {
         try {
             Date now = new Date();
             Date expiryDate = new Date(now.getTime() + expirationMs);
 
             String token = Jwts.builder()
-                    .setSubject(loginId)
                     .setIssuer(issuer)
                     .setIssuedAt(now)
                     .setExpiration(expiryDate)
-                    .claim("loginId", loginId)
+                    .claim("user_id", userId)
                     .claim("tokenType", "ACCESS_TOKEN")
                     .signWith(secretKey, SignatureAlgorithm.HS512)
                     .compact();
 
-            log.info("JWT 토큰 생성 완료 - 사용자 ID: {}", loginId);
+            log.info("JWT 토큰 생성 완료 - 사용자 ID: {}", userId);
             return token;
         } catch (Exception e) {
-            log.error("JWT 토큰 생성 중 오류 발생 - 사용자 ID: {}", loginId, e);
+            log.error("JWT 토큰 생성 중 오류 발생 - 사용자 ID: {}", userId, e);
             throw new JwtTokenException("토큰 생성 실패", e);
         }
     }
@@ -113,7 +112,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
             if (claims == null) {
                 return null;
             }
-            return claims.get("loginId", String.class);
+            return claims.get("user_id", String.class);
         } catch (Exception e) {
             log.error("JWT 토큰에서 사용자 ID 추출 중 오류 발생", e);
             return null;
