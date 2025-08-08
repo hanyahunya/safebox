@@ -22,7 +22,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOriginPattern("http://localhost/"); //허용할 URL *****나중에 배포,테스트시에 알맞게 변경********
+        configuration.addAllowedOriginPattern("*"); //허용할 URL *****나중에 배포,테스트시에 알맞게 변경********
         configuration.addAllowedMethod("*"); // 허용할 메서드
         configuration.addAllowedHeader("*"); // 허용할 헤더
         configuration.setAllowCredentials(true); // 쿠키등 크레딧 허용
@@ -36,16 +36,17 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // 허용할 엔드포인트
         final String[] whitelist = {
-
+                "/api/health",
+                "/api/user/signup", "/api/user/login"
         };
 
         http
                 .authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests
-                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                .requestMatchers(whitelist).permitAll()
-                                .anyRequest().permitAll() // --임시설정-- ( 모든 요청 허용 )
-//                                .anyRequest().authenticated() // 배포시 주석 해제
+                                authorizeRequests
+                                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                        .requestMatchers(whitelist).permitAll()
+//                                .anyRequest().permitAll() // --임시설정-- ( 모든 요청 허용 )
+                                        .anyRequest().authenticated() // 배포시 주석 해제
                 )
                 .formLogin(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정적용

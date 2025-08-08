@@ -1,7 +1,6 @@
 package com.safebox.back.security;
 
-import com.safebox.back.token.TokenService;
-import io.jsonwebtoken.Claims;
+import com.safebox.back.token.JwtTokenService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +17,7 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class TokenAuthFilter extends OncePerRequestFilter {
-    private final TokenService tokenService;
+    private final JwtTokenService tokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -35,15 +34,14 @@ public class TokenAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        Claims claims;
+        String userId = null;
         try {
-            claims = tokenService.getClaims(token);
+            userId = tokenService.getLoginIdFromToken(token);
         } catch (RuntimeException e) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String userId = claims.get("userId", String.class);
         if (userId != null) {
             UserPrincipal userPrincipal = new UserPrincipal(userId);
             Authentication auth = new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
