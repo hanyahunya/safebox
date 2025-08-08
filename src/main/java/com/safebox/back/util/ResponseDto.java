@@ -2,30 +2,25 @@ package com.safebox.back.util;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class ResponseDto<T> {
+@Getter
+@AllArgsConstructor(staticName = "set")
+public class ResponseDto <D> {
     private boolean success;
     private String message;
-    private T data;
+    private D data;
 
-    public static <T> ResponseDto<T> setSuccess(String message, T data) {
-        ResponseDto<T> response = new ResponseDto<>();
-        response.setSuccess(true);
-        response.setMessage(message);
-        response.setData(data);
-        return response;
+    public static <D> ResponseDto<D> success(String message, D data) {
+        return ResponseDto.set(true, message, data);
+    }
+    public static <D> ResponseDto<D> success(String message) {
+        return ResponseDto.set(true, message, null);
     }
 
-    public static <T> ResponseDto<T> setFailed(String message) {
-        ResponseDto<T> response = new ResponseDto<>();
-        response.setSuccess(false);
-        response.setMessage(message);
-        response.setData(null);
-        return response;
+    public static <D> ResponseDto<D> fail(String message, D data) {
+        return ResponseDto.set(false, message, data);
+    }
+    public static <D> ResponseDto<D> fail(String message) {
+        return ResponseDto.set(false, message, null);
     }
 }

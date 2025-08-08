@@ -29,13 +29,13 @@ public class UserServiceImpl implements UserService {
             // 1. 로그인 ID 중복 체크
             if (userRepository.existsByLoginId(signUpDto.getLoginId())) {
                 log.warn("회원가입 실패 - 중복된 로그인 ID: {}", signUpDto.getLoginId());
-                return ResponseDto.setFailed("이미 존재하는 아이디입니다.");
+                return ResponseDto.fail("이미 존재하는 아이디입니다.");
             }
 
             // 2. 이메일 중복 체크
             if (userRepository.existsByEmail(signUpDto.getEmail())) {
                 log.warn("회원가입 실패 - 중복된 이메일: {}", signUpDto.getEmail());
-                return ResponseDto.setFailed("이미 존재하는 이메일입니다.");
+                return ResponseDto.fail("이미 존재하는 이메일입니다.");
             }
 
             // 3. 비밀번호 암호화
@@ -52,11 +52,11 @@ public class UserServiceImpl implements UserService {
             userRepository.save(user);
             log.info("회원가입 성공 - 사용자 ID: {}", signUpDto.getLoginId());
 
-            return ResponseDto.setSuccess("회원가입이 완료되었습니다.", null);
+            return ResponseDto.success("회원가입이 완료되었습니다.");
 
         } catch (Exception e) {
             log.error("회원가입 처리 중 오류 발생", e);
-            return ResponseDto.setFailed("회원가입 처리 중 오류가 발생했습니다.");
+            return ResponseDto.fail("회원가입 처리 중 오류가 발생했습니다.");
         }
     }
 
@@ -70,27 +70,27 @@ public class UserServiceImpl implements UserService {
 
             if (user == null) {
                 log.warn("로그인 실패 - 존재하지 않는 사용자: {}", loginDto.getLoginId());
-                return ResponseDto.setFailed("존재하지 않는 아이디입니다.");
+                return ResponseDto.fail("존재하지 않는 아이디입니다.");
             }
 
             // 2. 비밀번호 검증
             if (!passwordEncoder.matches(loginDto.getPassword(), user.getPassword())) {
                 log.warn("로그인 실패 - 비밀번호 불일치: {}", loginDto.getLoginId());
-                return ResponseDto.setFailed("비밀번호가 일치하지 않습니다.");
+                return ResponseDto.fail("비밀번호가 일치하지 않습니다.");
             }
 
             // 3. JWT 토큰 생성
             String jwtToken = jwtTokenService.generateToken(user.getLoginId());
             log.info("로그인 성공 - 사용자 ID: {}", loginDto.getLoginId());
 
-            return ResponseDto.setSuccess("로그인 성공", jwtToken);
+            return ResponseDto.success("로그인 성공", jwtToken);
 
         } catch (JwtTokenException e) {
             log.error("JWT 토큰 생성 중 오류 - 사용자 ID: {}", loginDto.getLoginId(), e);
-            return ResponseDto.setFailed("로그인 토큰 생성 중 오류가 발생했습니다.");
+            return ResponseDto.fail("로그인 토큰 생성 중 오류가 발생했습니다.");
         } catch (Exception e) {
             log.error("로그인 처리 중 오류 발생", e);
-            return ResponseDto.setFailed("로그인 처리 중 오류가 발생했습니다.");
+            return ResponseDto.fail("로그인 처리 중 오류가 발생했습니다.");
         }
     }
 }

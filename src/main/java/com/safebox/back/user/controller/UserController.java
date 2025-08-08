@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.safebox.back.util.ResponseUtil.toResponse;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/user")
@@ -26,11 +28,7 @@ public class UserController {
         log.info("회원가입 요청 - 로그인 ID: {}", signUpDto.getLoginId());
         ResponseDto<Void> response = userService.signUp(signUpDto);
 
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return toResponse(response);
     }
 
     /**
@@ -41,11 +39,7 @@ public class UserController {
         log.info("로그인 요청 - 로그인 ID: {}", loginDto.getLoginId());
         ResponseDto<String> response = userService.login(loginDto);
 
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return toResponse(response);
     }
 
     /**
@@ -58,12 +52,12 @@ public class UserController {
                 String token = authHeader.substring(7);
                 // 여기서 토큰 무효화 로직 구현 가능
                 log.info("로그아웃 요청");
-                return ResponseEntity.ok(ResponseDto.setSuccess("로그아웃 되었습니다.", null));
+                return toResponse(ResponseDto.success("로그아웃 되었습니다."));
             }
-            return ResponseEntity.badRequest().body(ResponseDto.setFailed("유효하지 않은 토큰입니다."));
+            return toResponse(ResponseDto.fail("유효하지 않은 토큰입니다."));
         } catch (Exception e) {
             log.error("로그아웃 처리 중 오류 발생", e);
-            return ResponseEntity.badRequest().body(ResponseDto.setFailed("로그아웃 처리 중 오류가 발생했습니다."));
+            return toResponse(ResponseDto.fail("로그아웃 처리 중 오류가 발생했습니다."));
         }
     }
 }
