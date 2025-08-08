@@ -6,13 +6,14 @@ import com.safebox.back.util.ResponseDto;
 
 public interface UserService {
     /**
-     * 
+     * 회원가입 처리
      * @param signUpDto 회원가입 정보 담긴 dto
      * @return ResponseDto.setXXX(메시지)로 회원가입 성공여부 반환
      */
     ResponseDto<Void> signUp(SignUpDto signUpDto);
 
     /**
+     * 로그인 처리
      * @param loginDto id,password 담긴 dto
      * @return 토큰 문자열
      */
