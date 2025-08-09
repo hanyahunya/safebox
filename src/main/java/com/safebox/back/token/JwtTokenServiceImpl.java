@@ -45,7 +45,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
                     .setIssuedAt(now)
                     .setExpiration(expiryDate)
                     .claim("user_id", userId)
-                    .claim("role", role)
+                    .claim("role", role.name())
                     .claim("tokenType", "ACCESS_TOKEN")
                     .signWith(secretKey, SignatureAlgorithm.HS512)
                     .compact();
@@ -125,13 +125,13 @@ public class JwtTokenServiceImpl implements JwtTokenService {
      * 토큰에서 권한 추출
      */
     @Override
-    public Role getRoleFromToken(String token) {
+    public String getRoleFromToken(String token) {
         try {
             Claims claims = extractClaimsWithoutValidation(token);
             if (claims == null) {
                 return null;
             }
-            return claims.get("role", Role.class);
+            return claims.get("role", String.class);
         } catch (Exception e) {
             log.error("JWT 토큰에서 권한추출 중 오류 발생", e);
             return null;

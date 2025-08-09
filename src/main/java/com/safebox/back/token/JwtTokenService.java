@@ -31,7 +31,7 @@ public interface JwtTokenService {
      * @param token JWT 토큰
      * @return Role 객체
      */
-    Role getRoleFromToken(String token);
+    String getRoleFromToken(String token);
 
     /**
      * JWT 토큰 무효화 (블랙리스트에 추가)
