@@ -24,7 +24,14 @@ public interface JwtTokenService {
      * @param token JWT 토큰
      * @return 로그인 ID
      */
-    String getLoginIdFromToken(String token);
+    String getUserIdFromToken(String token);
+
+    /**
+     * JWT 토큰에서 권한 추출
+     * @param token JWT 토큰
+     * @return Role 객체
+     */
+    String getRoleFromToken(String token);
 
     /**
      * JWT 토큰 무효화 (블랙리스트에 추가)

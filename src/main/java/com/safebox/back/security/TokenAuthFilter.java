@@ -1,6 +1,7 @@
 package com.safebox.back.security;
 
 import com.safebox.back.token.JwtTokenService;
+import com.safebox.back.user.Role;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,16 +35,18 @@ public class TokenAuthFilter extends OncePerRequestFilter {
             return;
         }
 
-        String userId = null;
+        String userId;
+        String role;
         try {
-            userId = tokenService.getLoginIdFromToken(token);
+            userId = tokenService.getUserIdFromToken(token);
+            role = tokenService.getRoleFromToken(token);
         } catch (RuntimeException e) {
             filterChain.doFilter(request, response);
             return;
         }
 
         if (userId != null) {
-            UserPrincipal userPrincipal = new UserPrincipal(userId);
+            UserPrincipal userPrincipal = new UserPrincipal(userId, role);
             Authentication auth = new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(auth);
         }

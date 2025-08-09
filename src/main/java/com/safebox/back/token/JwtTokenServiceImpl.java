@@ -45,7 +45,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
                     .setIssuedAt(now)
                     .setExpiration(expiryDate)
                     .claim("user_id", userId)
-                    .claim("role", role)
+                    .claim("role", role.name())
                     .claim("tokenType", "ACCESS_TOKEN")
                     .signWith(secretKey, SignatureAlgorithm.HS512)
                     .compact();
@@ -108,7 +108,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
      * 토큰에서 로그인 ID 추출
      */
     @Override
-    public String getLoginIdFromToken(String token) {
+    public String getUserIdFromToken(String token) {
         try {
             Claims claims = extractClaimsWithoutValidation(token);
             if (claims == null) {
@@ -122,13 +122,30 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     }
 
     /**
+     * 토큰에서 권한 추출
+     */
+    @Override
+    public String getRoleFromToken(String token) {
+        try {
+            Claims claims = extractClaimsWithoutValidation(token);
+            if (claims == null) {
+                return null;
+            }
+            return claims.get("role", String.class);
+        } catch (Exception e) {
+            log.error("JWT 토큰에서 권한추출 중 오류 발생", e);
+            return null;
+        }
+    }
+
+    /**
      * 로그아웃 처리 (블랙리스트에 토큰 저장)
      */
     @Override
     public void invalidateToken(String token) {
         if (token != null && !token.trim().isEmpty()) {
             blacklistedTokens.add(token);
-            String loginId = getLoginIdFromToken(token);
+            String loginId = getUserIdFromToken(token);
             log.info("JWT 토큰 무효화 완료 - 사용자 ID: {}", loginId);
         }
     }
@@ -142,7 +159,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
             throw new JwtTokenException("유효하지 않은 토큰입니다.");
         }
 
-        String loginId = getLoginIdFromToken(token);
+        String loginId = getUserIdFromToken(token);
         if (loginId == null) {
             throw new JwtTokenException("토큰에서 사용자 정보를 찾을 수 없습니다.");
         }
