@@ -36,7 +36,7 @@ public class TokenAuthFilter extends OncePerRequestFilter {
         }
 
         String userId;
-        Role role;
+        String role;
         try {
             userId = tokenService.getUserIdFromToken(token);
             role = tokenService.getRoleFromToken(token);
