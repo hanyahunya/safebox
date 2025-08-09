@@ -31,7 +31,7 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
-	implementation 'org.jboss.aerogear:aerogear-otp-java:1.0.0'
+	implementation 'com.warrenstrange:googleauth:1.5.0'
 }
 
 tasks.named('test') {

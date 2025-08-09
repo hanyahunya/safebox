@@ -39,7 +39,8 @@ public class SecurityConfig {
         // 허용할 엔드포인트
         final String[] whitelist = {
                 "/api/health",
-                "/api/user/signup", "/api/user/login"
+                "/api/user/signup", "/api/user/login",
+                "/api/rpi/arrived/**", "/api/rpi/pickuped/**",
         };
 
         http
