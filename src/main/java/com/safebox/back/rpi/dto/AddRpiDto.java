@@ -8,7 +8,9 @@ import lombok.Setter;
 @Getter @Setter
 public class AddRpiDto {
     @JsonIgnore
-    private String username;
+    private String rpiUser;
+    @NotNull
+    private String user;
     @NotNull
     private String port;
     @NotNull

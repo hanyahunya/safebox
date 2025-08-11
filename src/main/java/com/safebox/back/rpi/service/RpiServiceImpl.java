@@ -1,14 +1,16 @@
 package com.safebox.back.rpi.service;
 
 import com.safebox.back.rpi.dto.AddRpiDto;
+import com.safebox.back.rpi.entity.Rpi;
+import com.safebox.back.rpi.repository.RpiRepository;
 import com.safebox.back.rpi.util.TotpService;
+import com.safebox.back.user.entity.User;
 import com.safebox.back.util.ResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-
 import java.util.Map;
 import java.util.UUID;
 
@@ -17,6 +19,7 @@ import java.util.UUID;
 public class RpiServiceImpl implements RpiService {
 
     private final TotpService totpService;
+    private final RpiRepository rpiRepository;
 
     private static final String BASE_URL = "http://safebox-rssh:5050";
 
@@ -24,8 +27,9 @@ public class RpiServiceImpl implements RpiService {
 
     @Override
     public ResponseDto<String> addUser(AddRpiDto reqDto) {
-        String username = "u_" + UUID.randomUUID().toString().substring(0, 8);
-        reqDto.setUsername(username);
+        String uuid = UUID.randomUUID().toString();
+        String username = "u_" + uuid.substring(0, 8);
+        reqDto.setRpiUser(username);
 
         String url = BASE_URL + "/add_user";
 
@@ -35,7 +39,7 @@ public class RpiServiceImpl implements RpiService {
         headers.set("X-TOTP", totpService.getTotp());
 
         Map<String, Object> body = Map.of(
-                "username", username,
+                "rpiUser", username,
                 "port", reqDto.getPort(),
                 "pubkey", reqDto.getPubkey()
         );
@@ -45,7 +49,9 @@ public class RpiServiceImpl implements RpiService {
         try {
             ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
             if (resp.getStatusCode().is2xxSuccessful()) {
-                return ResponseDto.success("라즈베리 파이 추가 성공", username);
+                Rpi rpi = Rpi.builder().rpiId(uuid).port(reqDto.getPort()).user(User.builder().id(reqDto.getUser()).build()).build();
+                rpiRepository.save(rpi);
+                return ResponseDto.success("라즈베리 파이 추가 성공", uuid);
             }
             return ResponseDto.fail("라즈베리 파이 추가 실패", null);
         } catch (RestClientException e) {
@@ -54,7 +60,8 @@ public class RpiServiceImpl implements RpiService {
     }
 
     @Override
-    public ResponseDto<Void> deleteUser(String username) {
+    public ResponseDto<Void> deleteUser(String rpiUser) {
+        String sshUser = "u_" + rpiUser.substring(0, 8);
         String url = BASE_URL + "/delete_user";
 
         HttpHeaders headers = new HttpHeaders();
@@ -62,12 +69,13 @@ public class RpiServiceImpl implements RpiService {
         headers.setAccept(java.util.List.of(MediaType.APPLICATION_JSON));
         headers.set("X-TOTP", totpService.getTotp());
 
-        Map<String, Object> body = Map.of("username", username);
+        Map<String, Object> body = Map.of("rpiUser", sshUser);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
         try {
             ResponseEntity<String> resp = restTemplate.exchange(url, HttpMethod.DELETE, entity, String.class);
             if (resp.getStatusCode().is2xxSuccessful()) {
+                rpiRepository.deleteById(rpiUser);
                 return ResponseDto.success("라즈베리파이 삭제 성공");
             }
             return ResponseDto.fail("라즈베리파이 삭제 실패");
