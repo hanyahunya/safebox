@@ -27,7 +27,7 @@ public class SecurityConfig {
         configuration.addAllowedOriginPattern("*"); //허용할 URL *****나중에 배포,테스트시에 알맞게 변경********
         configuration.addAllowedMethod("*"); // 허용할 메서드
         configuration.addAllowedHeader("*"); // 허용할 헤더
-        configuration.setAllowCredentials(true); // 쿠키등 크레딧 허용
+        configuration.setAllowCredentials(false); // 쿠키등 크레딧 허용
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration); // 모든요청에 CORS설정 적용
@@ -41,6 +41,7 @@ public class SecurityConfig {
                 "/api/health",
                 "/api/user/signup", "/api/user/login",
                 "/api/rpi/arrived/**", "/api/rpi/pickuped/**",
+                "/api/rpi/video/**", "/api/rpi/stolen/**"
         };
 
         http
