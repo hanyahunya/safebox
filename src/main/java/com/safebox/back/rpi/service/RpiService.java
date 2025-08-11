@@ -5,7 +5,15 @@ import com.safebox.back.util.ResponseDto;
 
 public interface RpiService {
 
+    /**
+     * @param addRpiDto user - 유저의 uuid / port - 포트 / pubkey - ssh pub키
+     * @return 라즈베리파이의 uuid
+     */
     ResponseDto<String> addUser(AddRpiDto addRpiDto);
 
-    ResponseDto<Void> deleteUser(String username);
+    /**
+     * @param rpiUser 라즈베리파이 고유 uuid
+     * @return
+     */
+    ResponseDto<Void> deleteUser(String rpiUser);
 }
