@@ -7,57 +7,103 @@ import com.safebox.back.rpi.entity.StolenDelivery;
 import com.safebox.back.rpi.repository.StolenRepository;
 import com.safebox.back.util.ResponseDto;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.UrlResource;
-import org.springframework.core.io.support.ResourceRegion;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 public class StolenServiceImpl implements StolenService {
     private final StolenRepository stolenRepository;
 
+
+    @Override
+    public ResponseDto<StolenDataListDto> getStolenDataList(String userId) {
+        StolenDataListDto responseDto = StolenDataListDto.entityToDto(stolenRepository.findByRpi_User_Id(userId));
+        return ResponseDto.success("stolen 정보 불러오기 설공", responseDto);
+    }
+
+    @Override
+    public ResponseEntity<Resource> getVideo(String userId, String rpiId, String deliveryId) {
+
+        if ( !stolenRepository.existsByDeliveryIdAndRpi_RpiIdAndRpi_User_Id(deliveryId, rpiId, userId)) {
+            return ResponseEntity.notFound().build();
+        }
+
+
+        Path path = Path.of("/app/videos/" + rpiId + "---" + deliveryId + ".mp4");
+
+        if (!Files.exists(path) || !Files.isReadable(path)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        FileSystemResource resource = new FileSystemResource(path);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("video/mp4"));
+
+        return ResponseEntity.ok().headers(headers).body(resource);
+    }
+
     @Override
     public ResponseDto<Void> saveStolen(StolenVideoDto reqDto) {
 
-        String rpiUuid = reqDto.getRpiUuid();
-        String deliUuid = reqDto.getDeliUuid();
+        String rpiUuid   = reqDto.getRpiUuid();
+        String deliUuid  = reqDto.getDeliUuid();
         String arrivedAt = reqDto.getArrivedAt();
         String retrievedAt = reqDto.getRetrievedAt();
         MultipartFile videoFile = reqDto.getVideoFile();
 
+        Path saveDir = Paths.get("/app/videos");
+
+        String finalFileName = rpiUuid + "---" + deliUuid + ".mp4";
+        Path finalPath = saveDir.resolve(finalFileName);
+
+        // 임시
+        Path tmpIn  = null;
+        Path tmpOut = null;
 
         try {
-            Path saveDir = Paths.get("/app/videos");
-            if (!Files.exists(saveDir)) {
-                Files.createDirectories(saveDir);
+            if (!Files.exists(saveDir)) Files.createDirectories(saveDir);
+
+            tmpIn = Files.createTempFile(saveDir, "upload-", ".bin");
+            try (var in = videoFile.getInputStream()) {
+                Files.copy(in, tmpIn, StandardCopyOption.REPLACE_EXISTING);
             }
 
-            // 확장자 추출
-            String originalName = videoFile.getOriginalFilename();
-            String extension = "";
-            if (originalName != null && originalName.contains(".")) {
-                extension = originalName.substring(originalName.lastIndexOf("."));
+            // 2) ffmpeg로 H.264 + AAC + faststart 변환
+            tmpOut = Files.createTempFile(saveDir, "transcode-", ".mp4");
+            boolean ok = transcodeToH264(tmpIn, tmpOut);
+            if (!ok) {
+                tryDelete(tmpOut);
+                return ResponseDto.fail("트랜스코딩 실패 (ffmpeg 필요)");
             }
 
-            String saveFileName = rpiUuid + "---" + deliUuid + extension;
-            Path savePath = saveDir.resolve(saveFileName);
-
-            Files.copy(videoFile.getInputStream(), savePath, StandardCopyOption.REPLACE_EXISTING);
-
+            try {
+                Files.move(tmpOut, finalPath,
+                        StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException ignore) {
+                Files.move(tmpOut, finalPath, StandardCopyOption.REPLACE_EXISTING);
+            }
 
         } catch (IOException e) {
             return ResponseDto.fail("영상저장 실패");
+        } finally {
+            tryDelete(tmpIn);
+            tryDelete(tmpOut);
         }
 
         StolenDelivery stolenDelivery = StolenDelivery.builder()
@@ -66,72 +112,47 @@ public class StolenServiceImpl implements StolenService {
                 .arrivedAt(LocalDateTime.parse(arrivedAt))
                 .retrievedAt(LocalDateTime.parse(retrievedAt))
                 .build();
+
         try {
             stolenRepository.save(stolenDelivery);
             return ResponseDto.success("저장 성공");
-        } catch (DataIntegrityViolationException e) {
-            return ResponseDto.fail("무결성 위반");
         } catch (Exception e) {
             return ResponseDto.fail("저장 실패");
         }
     }
 
-    @Override
-    public ResponseDto<StolenDataListDto> getStolenDataList(String userId) {
-        StolenDataListDto responseDto = StolenDataListDto.entityToDto(stolenRepository.findByRpi_User_Id(userId));
-        return ResponseDto.success("stolen 정보 불러오기 설공", responseDto);
+    /** ffmpeg로 H.264(AVC) + AAC + faststart 트랜스코딩 */
+    private boolean transcodeToH264(Path in, Path out) {
+        List<String> cmd = Arrays.asList(
+                "ffmpeg", "-y",
+                "-i", in.toString(),
+                "-map", "0:v:0", "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
+                "-pix_fmt", "yuv420p",
+                "-map", "0:a:0?", "-c:a", "aac", "-b:a", "128k",
+                "-movflags", "+faststart",
+                out.toString()
+        );
+        ProcessBuilder pb = new ProcessBuilder(cmd);
+        pb.redirectErrorStream(true);
+        try {
+            Process p = pb.start();
+            // 로그 소비(버퍼 꽉 차서 대기하는 걸 방지)
+            try (var r = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
+                /*while (r.readLine() != null) {  }*/ // <--로그용
+            }
+            boolean finished = p.waitFor(10, TimeUnit.MINUTES);
+            if (!finished) {
+                p.destroyForcibly();
+                return false;
+            }
+            return p.exitValue() == 0;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
-
-
-    @Override
-    public ResponseEntity<ResourceRegion> getVideoRegion(String rangeHeader) {
-        Path path = Path.of("/app/videos/test.mp4");
-        try {
-            if (!Files.exists(path)) {
-                return ResponseEntity.notFound().build();
-            }
-
-            UrlResource resource = new UrlResource(path.toUri());
-            long contentLength = resource.contentLength();
-
-            MediaType mediaType = MediaTypeFactory.getMediaType(path.getFileName().toString())
-                    .orElse(MediaType.asMediaType(MimeTypeUtils.APPLICATION_OCTET_STREAM));
-
-            // Range 요청 처리
-            if (rangeHeader != null) {
-                var ranges = HttpRange.parseRanges(rangeHeader);
-                if (ranges.isEmpty()) {
-                    return ResponseEntity.status(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
-                            .header(HttpHeaders.CONTENT_RANGE, "bytes */" + contentLength)
-                            .build();
-                }
-                HttpRange range = ranges.get(0);
-
-                long start = range.getRangeStart(contentLength);
-                long end = range.getRangeEnd(contentLength);
-                if (start < 0 || end < start || end >= contentLength) {
-                    return ResponseEntity.status(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
-                            .header(HttpHeaders.CONTENT_RANGE, "bytes */" + contentLength)
-                            .build();
-                }
-
-                ResourceRegion region = range.toResourceRegion(resource);
-                return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-                        .contentType(mediaType)
-                        .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                        .body(region);
-            }
-
-            // Range가 없으면 전체 구간
-            ResourceRegion whole = new ResourceRegion(resource, 0, contentLength);
-            return ResponseEntity.ok()
-                    .contentType(mediaType)
-                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                    .body(whole);
-
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+    private void tryDelete(Path p) {
+        if (p == null) return;
+        try { Files.deleteIfExists(p); } catch (Exception ignore) {}
     }
 }

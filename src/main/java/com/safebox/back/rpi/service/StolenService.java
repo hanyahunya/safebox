@@ -3,7 +3,7 @@ package com.safebox.back.rpi.service;
 import com.safebox.back.rpi.dto.StolenDataListDto;
 import com.safebox.back.rpi.dto.StolenVideoDto;
 import com.safebox.back.util.ResponseDto;
-import org.springframework.core.io.support.ResourceRegion;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 
 public interface StolenService {
@@ -11,5 +11,5 @@ public interface StolenService {
 
     ResponseDto<StolenDataListDto> getStolenDataList(String userId);
 
-    ResponseEntity<ResourceRegion> getVideoRegion(String range);
+    ResponseEntity<Resource> getVideo(String userId, String rpiId, String deliveryId);
 }
