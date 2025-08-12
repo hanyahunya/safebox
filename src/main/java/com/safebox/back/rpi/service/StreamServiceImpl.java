@@ -28,7 +28,7 @@ public class StreamServiceImpl implements StreamService {
             return;
         }
 
-        String videoStreamUrl = "http://safebox-rssh:" + dbRpi.get().getPort() + "/video";  // 외부 MJPEG 스트림 URL
+        String videoStreamUrl = "http://safebox-rssh:" + dbRpi.get().getPort() + "/video";  // 라즈베리파이 MJPEG 스트림 URL
 
         try {
             URI uri = URI.create(videoStreamUrl);
