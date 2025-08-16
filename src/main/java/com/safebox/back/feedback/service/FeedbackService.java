@@ -2,6 +2,7 @@ package com.safebox.back.feedback.service;
 
 import com.safebox.back.feedback.dto.FeedbackRequestDto;
 import com.safebox.back.feedback.dto.FeedbackResponseDto;
+import com.safebox.back.feedback.service.FeedbackStatsDto;
 import com.safebox.back.feedback.entity.Feedback;
 import com.safebox.back.feedback.entity.FeedbackStatus;
 import com.safebox.back.feedback.entity.FeedbackType;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,11 +36,9 @@ public class FeedbackService {
      */
     public FeedbackResponseDto createFeedback(FeedbackRequestDto requestDto) {
         Feedback feedback = new Feedback(
-                requestDto.getName(),
-                requestDto.getEmail(),
-                requestDto.getSubject(),
-                requestDto.getContent(),
-                requestDto.getType()
+                requestDto.getProductNumber(),
+                requestDto.getPhoneNumber(),
+                requestDto.getContent()
         );
 
         Feedback savedFeedback = feedbackRepository.save(feedback);
@@ -49,7 +49,7 @@ public class FeedbackService {
      * 피드백 ID로 조회
      */
     @Transactional(readOnly = true)
-    public Optional<FeedbackResponseDto> getFeedbackById(Long id) {
+    public Optional<FeedbackResponseDto> getFeedbackById(UUID id) {
         return feedbackRepository.findById(id)
                 .map(this::convertToResponseDto);
     }
@@ -65,11 +65,11 @@ public class FeedbackService {
     }
 
     /**
-     * 타입별 피드백 조회
+     * 제품번호로 피드백 조회
      */
     @Transactional(readOnly = true)
-    public List<FeedbackResponseDto> getFeedbacksByType(FeedbackType type) {
-        return feedbackRepository.findByTypeOrderByCreatedAtDesc(type)
+    public List<FeedbackResponseDto> getFeedbacksByProductNumber(String productNumber) {
+        return feedbackRepository.findByProductNumberOrderByCreatedAtDesc(productNumber)
                 .stream()
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
@@ -98,11 +98,11 @@ public class FeedbackService {
     }
 
     /**
-     * 이메일로 피드백 조회
+     * 전화번호로 피드백 조회
      */
     @Transactional(readOnly = true)
-    public List<FeedbackResponseDto> getFeedbacksByEmail(String email) {
-        return feedbackRepository.findByEmailOrderByCreatedAtDesc(email)
+    public List<FeedbackResponseDto> getFeedbacksByPhoneNumber(String phoneNumber) {
+        return feedbackRepository.findByPhoneNumberOrderByCreatedAtDesc(phoneNumber)
                 .stream()
                 .map(this::convertToResponseDto)
                 .collect(Collectors.toList());
@@ -111,7 +111,7 @@ public class FeedbackService {
     /**
      * 피드백 상태 업데이트
      */
-    public FeedbackResponseDto updateFeedbackStatus(Long id, FeedbackStatus status) {
+    public FeedbackResponseDto updateFeedbackStatus(UUID id, FeedbackStatus status) {
         Feedback feedback = feedbackRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("피드백을 찾을 수 없습니다: " + id));
 
@@ -125,7 +125,7 @@ public class FeedbackService {
     /**
      * 관리자 답변 추가
      */
-    public FeedbackResponseDto addAdminReply(Long id, String reply) {
+    public FeedbackResponseDto addAdminReply(UUID id, String reply) {
         Feedback feedback = feedbackRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("피드백을 찾을 수 없습니다: " + id));
 
@@ -141,7 +141,7 @@ public class FeedbackService {
     /**
      * 피드백 삭제
      */
-    public void deleteFeedback(Long id) {
+    public void deleteFeedback(UUID id) {
         if (!feedbackRepository.existsById(id)) {
             throw new IllegalArgumentException("피드백을 찾을 수 없습니다: " + id);
         }
@@ -185,12 +185,6 @@ public class FeedbackService {
         stats.setClosedCount(feedbackRepository.countByStatus(FeedbackStatus.CLOSED));
         stats.setTodayCount(feedbackRepository.countTodayFeedbacks());
 
-        // 타입별 개수
-        stats.setBugCount(feedbackRepository.countByType(FeedbackType.BUG));
-        stats.setSuggestionCount(feedbackRepository.countByType(FeedbackType.SUGGESTION));
-        stats.setComplaintCount(feedbackRepository.countByType(FeedbackType.COMPLAINT));
-        stats.setComplimentCount(feedbackRepository.countByType(FeedbackType.COMPLIMENT));
-
         return stats;
     }
 
@@ -200,11 +194,9 @@ public class FeedbackService {
     private FeedbackResponseDto convertToResponseDto(Feedback feedback) {
         FeedbackResponseDto dto = new FeedbackResponseDto();
         dto.setId(feedback.getId());
-        dto.setName(feedback.getName());
-        dto.setEmail(feedback.getEmail());
-        dto.setSubject(feedback.getSubject());
+        dto.setProductNumber(feedback.getProductNumber());
+        dto.setPhoneNumber(feedback.getPhoneNumber());
         dto.setContent(feedback.getContent());
-        dto.setType(feedback.getType());
         dto.setStatus(feedback.getStatus());
         dto.setCreatedAt(feedback.getCreatedAt());
         dto.setUpdatedAt(feedback.getUpdatedAt());
