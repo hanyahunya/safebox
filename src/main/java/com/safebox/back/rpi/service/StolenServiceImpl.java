@@ -73,16 +73,16 @@ public class StolenServiceImpl implements StolenService {
 
         String port = rpiOpt.get().getPort();
         String url = "http://safebox-rssh:" + port + "/stolen/" + parcelId;
-        log.info(url);
-        log.info(url);
 
-        try {
-            ResponseEntity<Void> response = restTemplate.getForEntity(url, Void.class);
-            return response.getStatusCode().is2xxSuccessful();
-        } catch (Exception e) {
-            return false;
-        }
+        new Thread(() -> {
+            try {
+                restTemplate.getForEntity(url, Void.class);
+            } catch (Exception ignored) {}
+        }).start();
+
+        return true;
     }
+
 
     @Override
     public ResponseDto<Void> saveStolen(StolenVideoDto reqDto) {
