@@ -29,6 +29,7 @@ public class RpiServiceImpl implements RpiService {
     private final MailService mailService;
     private final RpiRepository rpiRepository;
     private final MailTokenService mailTokenService;
+    private final RpiAccessStatus rpiAccessStatus;
 
     private static final String BASE_URL = "http://safebox-rssh:5050";
 
@@ -102,6 +103,7 @@ public class RpiServiceImpl implements RpiService {
         User user = rpi.get().getUser();
         Map<String, Object> params = new HashMap<>();
         params.put("username", user.getName());
+        rpiAccessStatus.onParcelArrived(rpi.get().getRpiId());
         mailService.sendArrivedMail(user.getEmail(), "택배가 도착했어요!", "ArrivedMail", params);
         return ResponseDto.success("택배도착 처리완료");
     }
@@ -117,7 +119,7 @@ public class RpiServiceImpl implements RpiService {
         params.put("username", user.getName());
         String token = mailTokenService.generateToken(requestDto.getRpiUuid(), requestDto.getParcelUuid());
         params.put("link", "http://183.101.36.243:41992/api/report/" + token);
-        log.info(token);
+        rpiAccessStatus.onParcelRetrieved(rpi.get().getRpiId());
         mailService.sendArrivedMail(user.getEmail(), "택배가 회수되었어요!", "PickupedMail", params);
         return ResponseDto.success("택배회수 처리완료");
     }
