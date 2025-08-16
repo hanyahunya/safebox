@@ -70,6 +70,7 @@ public class RpiController {
         if (!totpService.verifyTotp(otp)) {
             return ResponseEntity.status(403).build();
         }
+
         ResponseDto<Void> responseDto = rpiService.arrived(RpiParcelUuidDto.builder().rpiUuid(rpiUuid).parcelUuid(parcelUuid).build());
         return toResponse(responseDto);
     }

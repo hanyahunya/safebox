@@ -20,11 +20,15 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class StreamServiceImpl implements StreamService {
     private final RpiRepository rpiRepository;
+    private final RpiAccessStatus rpiAccessStatus;
 
     @Override
     public void stream(HttpServletResponse response, String userId) {
         Optional<Rpi> dbRpi = rpiRepository.findByUser_Id(userId);
         if (dbRpi.isEmpty()) {
+            return;
+        }
+        if (!rpiAccessStatus.getStatus(dbRpi.get().getRpiId())) {
             return;
         }
 
