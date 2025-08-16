@@ -41,7 +41,8 @@ public class SecurityConfig {
                 "/api/health",
                 "/api/user/signup", "/api/user/login",
                 "/api/rpi/arrived/**", "/api/rpi/pickuped/**",
-                "/api/rpi/video/**", "/api/rpi/stolen/**"
+                "/api/rpi/video/**", "/api/rpi/stolen/**",
+                "/api/test"
         };
 
         http
