@@ -12,4 +12,6 @@ public interface StolenService {
     ResponseDto<StolenDataListDto> getStolenDataList(String userId);
 
     ResponseEntity<Resource> getVideo(String userId, String rpiId, String deliveryId);
+
+    boolean reportStolen(String rpiId, String parcelId);
 }

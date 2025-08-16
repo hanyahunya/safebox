@@ -1,10 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <meta charset="UTF-8" />
+    <title>택배 회수 알림</title>
 </head>
 <body>
-pickup
+<p><strong th:text="${username} + '님, 택배가 회수되었습니다.'">택배가 회수되었습니다.</strong></p>
+
+<p>본인이 직접 회수한 것이 아니라면 아래 버튼을 눌러 도난 신고를 진행해 주세요.</p>
+
+<p>
+    <a th:href="${link}"
+       style="display:inline-block;padding:10px 16px;background:#2d89ef;color:#fff;text-decoration:none;border-radius:6px;">
+        도난 신고하기
+    </a>
+</p>
+
+<br/>
+
+<p>※ 도난된 택배 영상을 확인하려면 아래 링크로 접속해 주세요.</p>
+<p>
+    <a href="http://183.101.36.243:41992">택배어디가?</a>
+</p>
+
+<p style="font-size:12px;color:#888;">본 메일은 발신 전용입니다.</p>
 </body>
 </html>

@@ -4,13 +4,16 @@ import com.safebox.back.rpi.dto.StolenDataListDto;
 import com.safebox.back.rpi.dto.StolenVideoDto;
 import com.safebox.back.rpi.entity.Rpi;
 import com.safebox.back.rpi.entity.StolenDelivery;
+import com.safebox.back.rpi.repository.RpiRepository;
 import com.safebox.back.rpi.repository.StolenRepository;
 import com.safebox.back.util.ResponseDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -21,13 +24,17 @@ import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StolenServiceImpl implements StolenService {
     private final StolenRepository stolenRepository;
+    private final RpiRepository rpiRepository;
 
+    private final RestTemplate restTemplate = new RestTemplate();;
 
     @Override
     public ResponseDto<StolenDataListDto> getStolenDataList(String userId) {
@@ -55,6 +62,26 @@ public class StolenServiceImpl implements StolenService {
         headers.setContentType(MediaType.parseMediaType("video/mp4"));
 
         return ResponseEntity.ok().headers(headers).body(resource);
+    }
+
+    @Override
+    public boolean reportStolen(String rpiId, String parcelId) {
+        Optional<Rpi> rpiOpt = rpiRepository.findById(rpiId);
+        if (rpiOpt.isEmpty()) {
+            return false;
+        }
+
+        String port = rpiOpt.get().getPort();
+        String url = "http://safebox-rssh:" + port + "/stolen/" + parcelId;
+        log.info(url);
+        log.info(url);
+
+        try {
+            ResponseEntity<Void> response = restTemplate.getForEntity(url, Void.class);
+            return response.getStatusCode().is2xxSuccessful();
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Override
@@ -87,6 +114,7 @@ public class StolenServiceImpl implements StolenService {
             tmpOut = Files.createTempFile(saveDir, "transcode-", ".mp4");
             boolean ok = transcodeToH264(tmpIn, tmpOut);
             if (!ok) {
+                log.warn("[saveStolen] ffmpeg transcodeToH264 실패 → return fail()");
                 tryDelete(tmpOut);
                 return ResponseDto.fail("트랜스코딩 실패 (ffmpeg 필요)");
             }
@@ -100,6 +128,7 @@ public class StolenServiceImpl implements StolenService {
             }
 
         } catch (IOException e) {
+            log.warn("[saveStolen] IOException 발생, 영상저장 실패");
             return ResponseDto.fail("영상저장 실패");
         } finally {
             tryDelete(tmpIn);
@@ -117,6 +146,7 @@ public class StolenServiceImpl implements StolenService {
             stolenRepository.save(stolenDelivery);
             return ResponseDto.success("저장 성공");
         } catch (Exception e) {
+            log.warn("[saveStolen] DB save 실패 ({} , {})", rpiUuid, deliUuid);
             return ResponseDto.fail("저장 실패");
         }
     }
@@ -138,7 +168,7 @@ public class StolenServiceImpl implements StolenService {
             Process p = pb.start();
             // 로그 소비(버퍼 꽉 차서 대기하는 걸 방지)
             try (var r = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))) {
-                /*while (r.readLine() != null) {  }*/ // <--로그용
+                while (r.readLine() != null) {  } // <--버퍼역할 매우중요
             }
             boolean finished = p.waitFor(10, TimeUnit.MINUTES);
             if (!finished) {

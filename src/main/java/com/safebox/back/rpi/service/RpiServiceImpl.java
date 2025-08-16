@@ -1,25 +1,34 @@
 package com.safebox.back.rpi.service;
 
+import com.safebox.back.mail.MailService;
 import com.safebox.back.rpi.dto.AddRpiDto;
+import com.safebox.back.rpi.dto.RpiParcelUuidDto;
 import com.safebox.back.rpi.entity.Rpi;
 import com.safebox.back.rpi.repository.RpiRepository;
 import com.safebox.back.rpi.util.TotpService;
+import com.safebox.back.token.MailTokenService;
 import com.safebox.back.user.entity.User;
 import com.safebox.back.util.ResponseDto;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RpiServiceImpl implements RpiService {
-
     private final TotpService totpService;
+    private final MailService mailService;
     private final RpiRepository rpiRepository;
+    private final MailTokenService mailTokenService;
 
     private static final String BASE_URL = "http://safebox-rssh:5050";
 
@@ -82,5 +91,34 @@ public class RpiServiceImpl implements RpiService {
         } catch (RestClientException e) {
             return ResponseDto.fail("라즈베리파이 삭제 실패");
         }
+    }
+
+    @Override
+    public ResponseDto<Void> arrived(RpiParcelUuidDto requestDto) {
+        Optional<Rpi> rpi = rpiRepository.findById(requestDto.getRpiUuid());
+        if (rpi.isEmpty()) {
+            return ResponseDto.fail("택배도착 처리 실패");
+        }
+        User user = rpi.get().getUser();
+        Map<String, Object> params = new HashMap<>();
+        params.put("username", user.getName());
+        mailService.sendArrivedMail(user.getEmail(), "택배가 도착했어요!", "ArrivedMail", params);
+        return ResponseDto.success("택배도착 처리완료");
+    }
+
+    @Override
+    public ResponseDto<Void> pickuped(RpiParcelUuidDto requestDto) {
+        Optional<Rpi> rpi = rpiRepository.findById(requestDto.getRpiUuid());
+        if (rpi.isEmpty()) {
+            return ResponseDto.fail("택배회수 처리 실패");
+        }
+        User user = rpi.get().getUser();
+        Map<String, Object> params = new HashMap<>();
+        params.put("username", user.getName());
+        String token = mailTokenService.generateToken(requestDto.getRpiUuid(), requestDto.getParcelUuid());
+        params.put("link", "http://183.101.36.243:41992/api/report/" + token);
+        log.info(token);
+        mailService.sendArrivedMail(user.getEmail(), "택배가 회수되었어요!", "PickupedMail", params);
+        return ResponseDto.success("택배회수 처리완료");
     }
 }

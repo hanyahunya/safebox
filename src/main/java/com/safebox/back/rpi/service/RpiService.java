@@ -1,6 +1,7 @@
 package com.safebox.back.rpi.service;
 
 import com.safebox.back.rpi.dto.AddRpiDto;
+import com.safebox.back.rpi.dto.RpiParcelUuidDto;
 import com.safebox.back.util.ResponseDto;
 
 public interface RpiService {
@@ -16,4 +17,9 @@ public interface RpiService {
      * @return
      */
     ResponseDto<Void> deleteUser(String rpiUser);
+
+    ResponseDto<Void> arrived(RpiParcelUuidDto requestDto);
+
+    ResponseDto<Void> pickuped(RpiParcelUuidDto requestDto);
+
 }

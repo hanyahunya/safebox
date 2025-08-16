@@ -10,8 +10,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.thymeleaf.TemplateEngine;
 
-import javax.sql.DataSource;
-
 @Configuration
 public class AppConfig {
     private final JavaMailSender javaMailSender;
