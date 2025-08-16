@@ -1,7 +1,6 @@
 package com.safebox.back.feedback.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -14,14 +13,8 @@ public class Feedback {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "이름은 필수입니다")
-    @Size(max = 50)
-    @Column(nullable = false)
-    private String name;
-
-    @Email(message = "유효한 이메일 형식이어야 합니다")
-    @Size(max = 100)
-    private String email;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @NotBlank(message = "제목은 필수입니다")
     @Size(max = 200)
@@ -55,9 +48,8 @@ public class Feedback {
 
     public Feedback() {}
 
-    public Feedback(String name, String email, String subject, String content, FeedbackType type) {
-        this.name = name;
-        this.email = email;
+    public Feedback(Long userId, String subject, String content, FeedbackType type) {
+        this.userId = userId;
         this.subject = subject;
         this.content = content;
         this.type = type;
@@ -81,11 +73,8 @@ public class Feedback {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
     public String getSubject() { return subject; }
     public void setSubject(String subject) { this.subject = subject; }
