@@ -1,7 +1,7 @@
 package com.safebox.back.security;
 
-import com.safebox.back.token.JwtTokenService;
-import com.safebox.back.user.Role;
+import com.safebox.back.token.MailTokenService;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,44 +17,36 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class TokenAuthFilter extends OncePerRequestFilter {
-    private final JwtTokenService tokenService;
+public class MailTokenAuthFilter extends OncePerRequestFilter {
+    private final MailTokenService tokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if (request.getRequestURI().startsWith("/api/report/")) {
+        String uri = request.getRequestURI();
+        if (!uri.startsWith("/api/report/")) {
             filterChain.doFilter(request, response);
             return;
         }
-        String authHeader = request.getHeader("Authorization");
-
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-        String token = authHeader.substring(7);
-
+        String token = uri.substring("/api/report/".length());
         if (!tokenService.validateToken(token)) {
-            filterChain.doFilter(request, response);
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid token");
             return;
         }
-
-        String userId;
-        String role;
+        Claims claims = tokenService.getClaims(token);
+        String rpiId;
+        String parcelId;
         try {
-            userId = tokenService.getUserIdFromToken(token);
-            role = tokenService.getRoleFromToken(token);
-        } catch (RuntimeException e) {
-            filterChain.doFilter(request, response);
+            rpiId = claims.get("rpi_id").toString();
+            parcelId = claims.get("parcel_id").toString();
+        } catch (Exception e) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid token");
             return;
         }
-
-        if (userId != null) {
-            UserPrincipal userPrincipal = new UserPrincipal(userId, role);
-            Authentication auth = new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
+        if (rpiId != null && parcelId != null) {
+            StolenPrincipal principal = new StolenPrincipal(rpiId, parcelId);
+            Authentication auth = new UsernamePasswordAuthenticationToken(principal, null, null);
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
-
         filterChain.doFilter(request, response);
     }
 }

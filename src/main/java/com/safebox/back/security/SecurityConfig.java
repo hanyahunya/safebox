@@ -20,6 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final TokenAuthFilter tokenAuthFilter;
+    private final MailTokenAuthFilter mailTokenAuthFilter;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -55,6 +56,7 @@ public class SecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정적용
                 .csrf(AbstractHttpConfigurer::disable)
+                .addFilterBefore(mailTokenAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(tokenAuthFilter, UsernamePasswordAuthenticationFilter.class); // 토큰 검증 필터 적용
 
         return http.build();
