@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Date;
 
 @Component
 @RequiredArgsConstructor
@@ -35,15 +36,17 @@ public class MailTokenAuthFilter extends OncePerRequestFilter {
         Claims claims = tokenService.getClaims(token);
         String rpiId;
         String parcelId;
+        Date expiration;
         try {
             rpiId = claims.get("rpi_id").toString();
             parcelId = claims.get("parcel_id").toString();
+            expiration = claims.getExpiration();
         } catch (Exception e) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid token");
             return;
         }
         if (rpiId != null && parcelId != null) {
-            StolenPrincipal principal = new StolenPrincipal(rpiId, parcelId);
+            StolenPrincipal principal = new StolenPrincipal(rpiId, parcelId, expiration);
             Authentication auth = new UsernamePasswordAuthenticationToken(principal, null, null);
             SecurityContextHolder.getContext().setAuthentication(auth);
         }

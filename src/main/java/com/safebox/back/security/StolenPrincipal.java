@@ -6,6 +6,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -15,6 +16,8 @@ public class StolenPrincipal implements UserDetails {
     private final String rpiId;
     @Getter
     private final String parcelId;
+    @Getter
+    private final Date expirationDate;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
