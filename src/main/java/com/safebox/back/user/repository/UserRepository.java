@@ -27,7 +27,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
      */
     boolean existsByEmail(String email);
     @Repository
-    public interface UserRepository extends JpaRepository<User, String> { // Long -> String으로 변경
+    public interface UserRepository extends JpaRepository<User, String> {
 
         /**
          * 로그인 ID로 사용자 조회
