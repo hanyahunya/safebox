@@ -2,11 +2,13 @@ package com.safebox.back.feedback.service;
 
 import com.safebox.back.feedback.dto.FeedbackRequestDto;
 import com.safebox.back.feedback.dto.FeedbackResponseDto;
-import com.safebox.back.feedback.service.FeedbackStatsDto;
+import com.safebox.back.feedback.dto.FeedbackStatsDto;
 import com.safebox.back.feedback.entity.Feedback;
 import com.safebox.back.feedback.entity.FeedbackStatus;
 import com.safebox.back.feedback.entity.FeedbackType;
 import com.safebox.back.feedback.repository.FeedbackRepository;
+import com.safebox.back.user.entity.User;
+import com.safebox.back.user.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,17 +26,27 @@ import java.util.stream.Collectors;
 public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public FeedbackService(FeedbackRepository feedbackRepository) {
+    public FeedbackService(FeedbackRepository feedbackRepository, UserRepository userRepository) {
         this.feedbackRepository = feedbackRepository;
+        this.userRepository = userRepository;
     }
 
     /**
      * 새로운 피드백 저장
      */
-    public FeedbackResponseDto createFeedback(FeedbackRequestDto requestDto) {
+    public FeedbackResponseDto createFeedback(String userId, FeedbackRequestDto requestDto) {
+        if (userId == null || userId.trim().isEmpty()) {
+            throw new IllegalArgumentException("유효하지 않은 사용자 ID입니다.");
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다: " + userId));
+
         Feedback feedback = new Feedback(
+                user,
                 requestDto.getProductNumber(),
                 requestDto.getPhoneNumber(),
                 requestDto.getContent()
@@ -49,9 +60,20 @@ public class FeedbackService {
      * 피드백 ID로 조회
      */
     @Transactional(readOnly = true)
-    public Optional<FeedbackResponseDto> getFeedbackById(UUID id) {
+    public Optional<FeedbackResponseDto> getFeedbackById(String id) {
         return feedbackRepository.findById(id)
                 .map(this::convertToResponseDto);
+    }
+
+    /**
+     * 사용자별 피드백 조회
+     */
+    @Transactional(readOnly = true)
+    public List<FeedbackResponseDto> getFeedbacksByUserId(String userId) {
+        return feedbackRepository.findByUserIdOrderByCreatedAtDesc(userId)
+                .stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -87,6 +109,17 @@ public class FeedbackService {
     }
 
     /**
+     * 타입별 피드백 조회
+     */
+    @Transactional(readOnly = true)
+    public List<FeedbackResponseDto> getFeedbacksByType(FeedbackType type) {
+        return feedbackRepository.findByTypeOrderByCreatedAtDesc(type)
+                .stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * 키워드로 피드백 검색
      */
     @Transactional(readOnly = true)
@@ -111,7 +144,7 @@ public class FeedbackService {
     /**
      * 피드백 상태 업데이트
      */
-    public FeedbackResponseDto updateFeedbackStatus(UUID id, FeedbackStatus status) {
+    public FeedbackResponseDto updateFeedbackStatus(String id, FeedbackStatus status) {
         Feedback feedback = feedbackRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("피드백을 찾을 수 없습니다: " + id));
 
@@ -125,7 +158,7 @@ public class FeedbackService {
     /**
      * 관리자 답변 추가
      */
-    public FeedbackResponseDto addAdminReply(UUID id, String reply) {
+    public FeedbackResponseDto addAdminReply(String id, String reply) {
         Feedback feedback = feedbackRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("피드백을 찾을 수 없습니다: " + id));
 
@@ -141,7 +174,7 @@ public class FeedbackService {
     /**
      * 피드백 삭제
      */
-    public void deleteFeedback(UUID id) {
+    public void deleteFeedback(String id) {
         if (!feedbackRepository.existsById(id)) {
             throw new IllegalArgumentException("피드백을 찾을 수 없습니다: " + id);
         }
@@ -149,7 +182,7 @@ public class FeedbackService {
     }
 
     /**
-     * 답변이 없는 피드백 조회 (관리자용)
+     * 답변이 없는 피드백 조회
      */
     @Transactional(readOnly = true)
     public List<FeedbackResponseDto> getUnansweredFeedbacks() {
@@ -185,19 +218,26 @@ public class FeedbackService {
         stats.setClosedCount(feedbackRepository.countByStatus(FeedbackStatus.CLOSED));
         stats.setTodayCount(feedbackRepository.countTodayFeedbacks());
 
+        stats.setBugCount(feedbackRepository.countByType(FeedbackType.BUG));
+        stats.setSuggestionCount(feedbackRepository.countByType(FeedbackType.SUGGESTION));
+        stats.setComplaintCount(feedbackRepository.countByType(FeedbackType.COMPLAINT));
+        stats.setComplimentCount(feedbackRepository.countByType(FeedbackType.COMPLIMENT));
+
         return stats;
     }
 
     /**
-     * Entity를 ResponseDto로 변환
+     * Entity → ResponseDto 변환
      */
     private FeedbackResponseDto convertToResponseDto(Feedback feedback) {
         FeedbackResponseDto dto = new FeedbackResponseDto();
         dto.setId(feedback.getId());
+        dto.setUserId(feedback.getUserId()); // String
         dto.setProductNumber(feedback.getProductNumber());
         dto.setPhoneNumber(feedback.getPhoneNumber());
         dto.setContent(feedback.getContent());
         dto.setStatus(feedback.getStatus());
+        dto.setType(feedback.getType());
         dto.setCreatedAt(feedback.getCreatedAt());
         dto.setUpdatedAt(feedback.getUpdatedAt());
         dto.setAdminReply(feedback.getAdminReply());

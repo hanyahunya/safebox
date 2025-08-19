@@ -1,4 +1,6 @@
-package com.safebox.back.feedback.service;
+package com.safebox.back.feedback.dto;
+
+
 
 public class FeedbackStatsDto {
     private long totalCount;
@@ -12,7 +14,7 @@ public class FeedbackStatsDto {
     private long complaintCount;
     private long complimentCount;
 
-    // 기본 생성자
+    // ê¸°ë³¸ ìƒì„±ìž
     public FeedbackStatsDto() {}
 
     // Getters and Setters

@@ -4,7 +4,7 @@ import com.safebox.back.feedback.dto.AdminReplyDto;
 import com.safebox.back.feedback.dto.ApiResponse;
 import com.safebox.back.feedback.dto.FeedbackRequestDto;
 import com.safebox.back.feedback.dto.FeedbackResponseDto;
-import com.safebox.back.feedback.service.FeedbackStatsDto;
+import com.safebox.back.feedback.dto.FeedbackStatsDto;
 import com.safebox.back.feedback.entity.FeedbackStatus;
 import com.safebox.back.feedback.service.FeedbackService;
 import jakarta.validation.Valid;
@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/feedback")
@@ -30,15 +29,12 @@ public class FeedbackController {
         this.feedbackService = feedbackService;
     }
 
-    /**
-     * 새로운 피드백 생성
-     * HTTP: POST /api/feedback
-     */
     @PostMapping
     public ResponseEntity<ApiResponse<FeedbackResponseDto>> createFeedback(
+            @RequestHeader("X-User-Id") String userId,
             @Valid @RequestBody FeedbackRequestDto requestDto) {
         try {
-            FeedbackResponseDto feedback = feedbackService.createFeedback(requestDto);
+            FeedbackResponseDto feedback = feedbackService.createFeedback(userId, requestDto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(true, "피드백이 성공적으로 등록되었습니다.", feedback));
         } catch (Exception e) {
@@ -47,10 +43,6 @@ public class FeedbackController {
         }
     }
 
-    /**
-     * 모든 피드백 조회 (페이징)
-     * HTTP: GET /api/feedback?page=0&size=10
-     */
     @GetMapping
     public ResponseEntity<ApiResponse<Page<FeedbackResponseDto>>> getAllFeedbacks(
             @RequestParam(defaultValue = "0") int page,
@@ -64,26 +56,27 @@ public class FeedbackController {
         }
     }
 
-    /**
-     * 특정 피드백 단건 조회
-     * HTTP: GET /api/feedback/{id}
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<FeedbackResponseDto>> getFeedbackById(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<FeedbackResponseDto>> getFeedbackById(@PathVariable String id) {
         Optional<FeedbackResponseDto> feedback = feedbackService.getFeedbackById(id);
+        return feedback.map(response -> ResponseEntity.ok(new ApiResponse<>(true, "피드백을 성공적으로 조회했습니다.", response)))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(false, "해당 피드백을 찾을 수 없습니다.", null)));
+    }
 
-        if (feedback.isPresent()) {
-            return ResponseEntity.ok(new ApiResponse<>(true, "피드백을 성공적으로 조회했습니다.", feedback.get()));
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(false, "해당 피드백을 찾을 수 없습니다.", null));
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getFeedbacksByUserId(
+            @PathVariable String userId) {
+        try {
+            List<FeedbackResponseDto> feedbacks = feedbackService.getFeedbacksByUserId(userId);
+            return ResponseEntity.ok(new ApiResponse<>(true,
+                    "사용자의 피드백을 성공적으로 조회했습니다.", feedbacks));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse<>(false, "사용자별 피드백 조회에 실패했습니다: " + e.getMessage(), null));
         }
     }
 
-    /**
-     * 제품번호별 피드백 조회
-     * HTTP: GET /api/feedback/product/{productNumber}
-     */
     @GetMapping("/product/{productNumber}")
     public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getFeedbacksByProductNumber(
             @PathVariable String productNumber) {
@@ -97,10 +90,6 @@ public class FeedbackController {
         }
     }
 
-    /**
-     * 상태별 피드백 조회
-     * HTTP: GET /api/feedback/status/{status}
-     */
     @GetMapping("/status/{status}")
     public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getFeedbacksByStatus(
             @PathVariable FeedbackStatus status) {
@@ -114,10 +103,6 @@ public class FeedbackController {
         }
     }
 
-    /**
-     * 키워드 검색
-     * HTTP: GET /api/feedback/search?keyword=버그
-     */
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> searchFeedbacks(
             @RequestParam String keyword) {
@@ -131,10 +116,6 @@ public class FeedbackController {
         }
     }
 
-    /**
-     * 전화번호로 피드백 조회
-     * HTTP: GET /api/feedback/phone/{phoneNumber}
-     */
     @GetMapping("/phone/{phoneNumber}")
     public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getFeedbacksByPhoneNumber(
             @PathVariable String phoneNumber) {
@@ -148,13 +129,9 @@ public class FeedbackController {
         }
     }
 
-    /**
-     * 피드백 상태 업데이트 (관리자용)
-     * HTTP: PUT /api/feedback/{id}/status?status=IN_PROGRESS
-     */
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<FeedbackResponseDto>> updateFeedbackStatus(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @RequestParam FeedbackStatus status) {
         try {
             FeedbackResponseDto updatedFeedback = feedbackService.updateFeedbackStatus(id, status);
@@ -169,13 +146,9 @@ public class FeedbackController {
         }
     }
 
-    /**
-     * 관리자 답변 추가 (관리자용)
-     * HTTP: POST /api/feedback/{id}/reply
-     */
     @PostMapping("/{id}/reply")
     public ResponseEntity<ApiResponse<FeedbackResponseDto>> addAdminReply(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @Valid @RequestBody AdminReplyDto replyDto) {
         try {
             FeedbackResponseDto updatedFeedback = feedbackService.addAdminReply(id, replyDto.getReply());
@@ -190,12 +163,8 @@ public class FeedbackController {
         }
     }
 
-    /**
-     * 피드백 삭제 (관리자용)
-     * HTTP: DELETE /api/feedback/{id}
-     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteFeedback(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<Void>> deleteFeedback(@PathVariable String id) {
         try {
             feedbackService.deleteFeedback(id);
             return ResponseEntity.ok(new ApiResponse<>(true, "피드백이 성공적으로 삭제되었습니다.", null));
@@ -208,10 +177,6 @@ public class FeedbackController {
         }
     }
 
-    /**
-     * 답변이 없는 피드백 조회 (관리자용)
-     * HTTP: GET /api/feedback/unanswered
-     */
     @GetMapping("/unanswered")
     public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getUnansweredFeedbacks() {
         try {
@@ -224,10 +189,6 @@ public class FeedbackController {
         }
     }
 
-    /**
-     * 최근 N일간 피드백 조회
-     * HTTP: GET /api/feedback/recent?days=7
-     */
     @GetMapping("/recent")
     public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getRecentFeedbacks(
             @RequestParam(defaultValue = "7") int days) {
@@ -241,10 +202,6 @@ public class FeedbackController {
         }
     }
 
-    /**
-     * 피드백 통계 조회 (관리자용)
-     * HTTP: GET /api/feedback/stats
-     */
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<FeedbackStatsDto>> getFeedbackStats() {
         try {
