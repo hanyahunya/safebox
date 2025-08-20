@@ -5,11 +5,13 @@ import com.safebox.back.feedback.dto.FeedbackRequestDto;
 import com.safebox.back.feedback.dto.FeedbackResponseDto;
 import com.safebox.back.feedback.entity.FeedbackStatus;
 import com.safebox.back.feedback.service.FeedbackService;
+import com.safebox.back.security.UserPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,10 +34,10 @@ public class FeedbackController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<FeedbackResponseDto>> createFeedback(
-            @RequestHeader("X-User-Id") String userId,
+            @AuthenticationPrincipal UserPrincipal user,
             @Valid @RequestBody FeedbackRequestDto requestDto) {
         try {
-            FeedbackResponseDto feedback = feedbackService.createFeedback(userId, requestDto);
+            FeedbackResponseDto feedback = feedbackService.createFeedback(user.getUserId(), requestDto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>(true, "피드백이 성공적으로 등록되었습니다.", feedback));
         } catch (Exception e) {
