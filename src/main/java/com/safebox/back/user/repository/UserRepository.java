@@ -22,6 +22,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByLoginId(String loginId);
 
     /**
+     * 사용자 ID 문자열로 사용자 조회
+     */
+    Optional<User> findByUserIdString(String userId);
+
+    /**
      * 이메일 존재 여부 확인
      */
     boolean existsByEmail(String email);
