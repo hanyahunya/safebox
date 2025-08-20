@@ -1,10 +1,8 @@
 package com.safebox.back.feedback.controller;
 
-import com.safebox.back.feedback.dto.AdminReplyDto;
 import com.safebox.back.feedback.dto.ApiResponse;
 import com.safebox.back.feedback.dto.FeedbackRequestDto;
 import com.safebox.back.feedback.dto.FeedbackResponseDto;
-import com.safebox.back.feedback.dto.FeedbackStatsDto;
 import com.safebox.back.feedback.entity.FeedbackStatus;
 import com.safebox.back.feedback.service.FeedbackService;
 import jakarta.validation.Valid;
@@ -29,6 +27,9 @@ public class FeedbackController {
         this.feedbackService = feedbackService;
     }
 
+    /**
+     * 피드백 등록
+     */
     @PostMapping
     public ResponseEntity<ApiResponse<FeedbackResponseDto>> createFeedback(
             @RequestHeader("X-User-Id") String userId,
@@ -43,6 +44,9 @@ public class FeedbackController {
         }
     }
 
+    /**
+     * 모든 피드백 조회 (페이징)
+     */
     @GetMapping
     public ResponseEntity<ApiResponse<Page<FeedbackResponseDto>>> getAllFeedbacks(
             @RequestParam(defaultValue = "0") int page,
@@ -56,6 +60,9 @@ public class FeedbackController {
         }
     }
 
+    /**
+     * ID로 피드백 조회
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<FeedbackResponseDto>> getFeedbackById(@PathVariable String id) {
         Optional<FeedbackResponseDto> feedback = feedbackService.getFeedbackById(id);
@@ -64,6 +71,9 @@ public class FeedbackController {
                         .body(new ApiResponse<>(false, "해당 피드백을 찾을 수 없습니다.", null)));
     }
 
+    /**
+     * 사용자별 피드백 조회
+     */
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getFeedbacksByUserId(
             @PathVariable String userId) {
@@ -77,6 +87,9 @@ public class FeedbackController {
         }
     }
 
+    /**
+     * 제품번호별 피드백 조회
+     */
     @GetMapping("/product/{productNumber}")
     public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getFeedbacksByProductNumber(
             @PathVariable String productNumber) {
@@ -90,32 +103,25 @@ public class FeedbackController {
         }
     }
 
+    /**
+     * 상태별 피드백 조회
+     */
     @GetMapping("/status/{status}")
     public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getFeedbacksByStatus(
             @PathVariable FeedbackStatus status) {
         try {
             List<FeedbackResponseDto> feedbacks = feedbackService.getFeedbacksByStatus(status);
             return ResponseEntity.ok(new ApiResponse<>(true,
-                    status.getDescription() + " 피드백을 성공적으로 조회했습니다.", feedbacks));
+                    status + " 상태의 피드백을 성공적으로 조회했습니다.", feedbacks));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>(false, "상태별 피드백 조회에 실패했습니다: " + e.getMessage(), null));
         }
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> searchFeedbacks(
-            @RequestParam String keyword) {
-        try {
-            List<FeedbackResponseDto> feedbacks = feedbackService.searchFeedbacks(keyword);
-            return ResponseEntity.ok(new ApiResponse<>(true,
-                    "키워드 '" + keyword + "'로 검색한 피드백을 성공적으로 조회했습니다.", feedbacks));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "피드백 검색에 실패했습니다: " + e.getMessage(), null));
-        }
-    }
-
+    /**
+     * 전화번호별 피드백 조회
+     */
     @GetMapping("/phone/{phoneNumber}")
     public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getFeedbacksByPhoneNumber(
             @PathVariable String phoneNumber) {
@@ -129,6 +135,9 @@ public class FeedbackController {
         }
     }
 
+    /**
+     * 피드백 상태 업데이트
+     */
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<FeedbackResponseDto>> updateFeedbackStatus(
             @PathVariable String id,
@@ -146,23 +155,9 @@ public class FeedbackController {
         }
     }
 
-    @PostMapping("/{id}/reply")
-    public ResponseEntity<ApiResponse<FeedbackResponseDto>> addAdminReply(
-            @PathVariable String id,
-            @Valid @RequestBody AdminReplyDto replyDto) {
-        try {
-            FeedbackResponseDto updatedFeedback = feedbackService.addAdminReply(id, replyDto.getReply());
-            return ResponseEntity.ok(new ApiResponse<>(true,
-                    "관리자 답변이 성공적으로 등록되었습니다.", updatedFeedback));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>(false, e.getMessage(), null));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "답변 등록에 실패했습니다: " + e.getMessage(), null));
-        }
-    }
-
+    /**
+     * 피드백 삭제
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteFeedback(@PathVariable String id) {
         try {
@@ -174,43 +169,6 @@ public class FeedbackController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>(false, "피드백 삭제에 실패했습니다: " + e.getMessage(), null));
-        }
-    }
-
-    @GetMapping("/unanswered")
-    public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getUnansweredFeedbacks() {
-        try {
-            List<FeedbackResponseDto> feedbacks = feedbackService.getUnansweredFeedbacks();
-            return ResponseEntity.ok(new ApiResponse<>(true,
-                    "답변이 없는 피드백을 성공적으로 조회했습니다.", feedbacks));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "미답변 피드백 조회에 실패했습니다: " + e.getMessage(), null));
-        }
-    }
-
-    @GetMapping("/recent")
-    public ResponseEntity<ApiResponse<List<FeedbackResponseDto>>> getRecentFeedbacks(
-            @RequestParam(defaultValue = "7") int days) {
-        try {
-            List<FeedbackResponseDto> feedbacks = feedbackService.getRecentFeedbacks(days);
-            return ResponseEntity.ok(new ApiResponse<>(true,
-                    "최근 " + days + "일간의 피드백을 성공적으로 조회했습니다.", feedbacks));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "최근 피드백 조회에 실패했습니다: " + e.getMessage(), null));
-        }
-    }
-
-    @GetMapping("/stats")
-    public ResponseEntity<ApiResponse<FeedbackStatsDto>> getFeedbackStats() {
-        try {
-            FeedbackStatsDto stats = feedbackService.getFeedbackStats();
-            return ResponseEntity.ok(new ApiResponse<>(true,
-                    "피드백 통계를 성공적으로 조회했습니다.", stats));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "통계 조회에 실패했습니다: " + e.getMessage(), null));
         }
     }
 }

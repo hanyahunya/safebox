@@ -38,37 +38,16 @@ public class Feedback {
     @Column(name = "status", nullable = false)
     private FeedbackStatus status = FeedbackStatus.PENDING;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type")
-    private FeedbackType type;
-
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "admin_reply", columnDefinition = "TEXT")
-    private String adminReply;
-
-    @Column(name = "replied_at")
-    private LocalDateTime repliedAt;
-
     // 생성자
     public Feedback(User user, String productNumber, String phoneNumber, String content) {
-        this.id = generateCustomId();
         this.user = user;
         this.productNumber = productNumber;
         this.phoneNumber = phoneNumber;
         this.content = content;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
         this.status = FeedbackStatus.PENDING;
-    }
-
-    public Feedback(User user, String productNumber, String phoneNumber, String content, FeedbackType type) {
-        this(user, productNumber, phoneNumber, content);
-        this.type = type;
     }
 
     // 외래키 반환용 (User PK = String)
@@ -84,17 +63,11 @@ public class Feedback {
         return "FB" + timestamp + randomSuffix;
     }
 
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
-
     @PrePersist
     public void prePersist() {
         if (this.id == null) {
             this.id = generateCustomId();
         }
         this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
     }
 }
