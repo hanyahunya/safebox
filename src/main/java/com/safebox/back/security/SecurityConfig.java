@@ -42,7 +42,7 @@ public class SecurityConfig {
                 "/api/health",
                 "/api/user/signup", "/api/user/login",
                 "/api/rpi/arrived/**", "/api/rpi/pickuped/**",
-                "/api/rpi/video/**", "/api/rpi/stolen/**"
+                "/api/rpi/video/**"
         };
 
         http
@@ -50,6 +50,7 @@ public class SecurityConfig {
                                 authorizeRequests
                                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                         .requestMatchers(whitelist).permitAll()
+                                        .requestMatchers(HttpMethod.POST, "/api/rpi/stolen/**").permitAll()
 //                                .anyRequest().permitAll() // --임시설정-- ( 모든 요청 허용 )
                                         .anyRequest().authenticated() // 배포시 주석 해제
                 )

@@ -1,28 +1,75 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8" />
-    <title>택배 회수 알림</title>
+  <meta charset="UTF-8" />
+  <title>택배 회수 알림</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    img { border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+    table { border-collapse: collapse !important; }
+    @media screen and (max-width: 600px) {
+      .container { width: 100% !important; }
+      .px { padding-left: 20px !important; padding-right: 20px !important; }
+    }
+  </style>
 </head>
-<body>
-<p><strong th:text="${username} + '님, 택배가 회수되었습니다.'">택배가 회수되었습니다.</strong></p>
+<body style="margin:0; padding:0; background-color:#f3f8ff;">
 
-<p>본인이 직접 회수한 것이 아니라면 아래 버튼을 눌러 도난 신고를 진행해 주세요.</p>
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f3f8ff;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="container" style="max-width:600px; background-color:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 6px 24px rgba(34,47,66,0.08);">
+          <tr>
+            <td style="background-color:#222f42; padding:20px 24px;">
+              <h1 style="margin:0; font-size:20px; font-family:Arial, 'Noto Sans KR', sans-serif; color:#f3f8ff;">
+                📦 택배 회수 알림
+              </h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px; font-family:Arial, 'Noto Sans KR', sans-serif; color:#222f42;">
+              <p style="margin:0; font-size:16px; line-height:1.6; font-weight:bold;"
+                 th:text="${username} + '님, 택배가 회수되었습니다.'">
+                 택배가 회수되었습니다.
+              </p>
 
-<p>
-    <a th:href="${link}"
-       style="display:inline-block;padding:10px 16px;background:#2d89ef;color:#fff;text-decoration:none;border-radius:6px;">
-        도난 신고하기
-    </a>
-</p>
-
-<br/>
-
-<p>※ 도난된 택배 영상을 확인하려면 아래 링크로 접속해 주세요.</p>
-<p>
-    <a href="http://183.101.36.243:41992">택배어디가?</a>
-</p>
-
-<p style="font-size:12px;color:#888;">본 메일은 발신 전용입니다.</p>
+              <p style="margin:16px 0 0 0; font-size:14px; line-height:1.6;">
+                본인이 직접 회수한 것이 아니라면 아래 버튼을 눌러 <strong>도난 신고</strong>를 진행해 주세요.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:0 28px 16px 28px;">
+              <a th:href="${link}"
+                 target="_blank"
+                 style="display:inline-block; background-color:#5d769a; color:#ffffff; text-decoration:none; font-family:Arial, 'Noto Sans KR', sans-serif; font-size:15px; font-weight:bold; line-height:46px; height:46px; min-width:200px; padding:0 24px; border-radius:8px; border:1px solid #5d769a;">
+                도난 신고하기
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 28px 28px 28px; font-family:Arial, 'Noto Sans KR', sans-serif; color:#222f42;" align="center">
+              <p style="margin:24px 0 8px 0; font-size:14px; line-height:1.6;">
+                ※ 도난된 택배 영상을 확인하려면 아래 버튼으로 접속해 주세요.
+              </p>
+              <a href="http://183.101.36.243:41992"
+                target="_blank"
+                style="display:inline-block; background-color:#5d769a; color:#ffffff; text-decoration:none; font-family:Arial, 'Noto Sans KR', sans-serif; font-size:15px; font-weight:bold; line-height:46px; height:46px; min-width:200px; padding:0 24px; border-radius:8px; border:1px solid #5d769a;">
+                택배어디가 접속하기
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f3f8ff; padding:16px 24px; text-align:center;">
+              <p style="margin:0; font-size:12px; line-height:1.6; font-family:Arial, 'Noto Sans KR', sans-serif; color:#5d769a;">
+                ※ 본 메일은 발신 전용입니다. 문의가 필요하면 서비스 내 고객센터를 이용해주세요.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
