@@ -51,7 +51,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorizeRequests ->
                                 authorizeRequests
-                                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                                                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                         .requestMatchers(HttpMethod.POST, "/api/feedback").authenticated()
                                         .requestMatchers(whitelist).permitAll()
                                         .requestMatchers(HttpMethod.POST, "/api/rpi/stolen/**").permitAll()
