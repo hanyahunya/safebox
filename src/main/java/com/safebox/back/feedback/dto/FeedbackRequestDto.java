@@ -17,7 +17,6 @@ import jakarta.validation.constraints.Pattern;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FeedbackRequestDto {
-    private Long userId;         // 외래키
     private String productNumber;
     private String phoneNumber;
     private String content;
