@@ -39,7 +39,7 @@ public class FeedbackService {
             throw new IllegalArgumentException("유효하지 않은 사용자 ID입니다.");
         }
 
-        User user = userRepository.findByUserIdString(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다: " + userId));
 
         Feedback feedback = new Feedback(
