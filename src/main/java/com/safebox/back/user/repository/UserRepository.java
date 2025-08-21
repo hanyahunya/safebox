@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, String> {
 
     /**
      * 로그인 ID로 사용자 조회
@@ -20,11 +20,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * 로그인 ID 존재 여부 확인
      */
     boolean existsByLoginId(String loginId);
-
-    /**
-     * 사용자 ID 문자열로 사용자 조회
-     */
-    Optional<User> findByUserIdString(String userId);
 
     /**
      * 이메일 존재 여부 확인
