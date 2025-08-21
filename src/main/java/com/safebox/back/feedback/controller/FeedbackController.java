@@ -39,10 +39,10 @@ public class FeedbackController {
         try {
             FeedbackResponseDto feedback = feedbackService.createFeedback(user.getUserId(), requestDto);
             return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(new ApiResponse<>(true, "피드백이 성공적으로 등록되었습니다.", feedback));
+                    .body(new ApiResponse<>(true, "리뷰가 성공적으로 등록되었습니다.", feedback));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(false, "피드백 등록에 실패했습니다: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "리뷰 등록에 실패했습니다: " + e.getMessage(), null));
         }
     }
 
@@ -55,10 +55,10 @@ public class FeedbackController {
             @RequestParam(defaultValue = "10") int size) {
         try {
             Page<FeedbackResponseDto> feedbacks = feedbackService.getAllFeedbacks(page, size);
-            return ResponseEntity.ok(new ApiResponse<>(true, "피드백 목록을 성공적으로 조회했습니다.", feedbacks));
+            return ResponseEntity.ok(new ApiResponse<>(true, "리뷰 목록을 성공적으로 조회했습니다.", feedbacks));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "피드백 조회에 실패했습니다: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "리뷰 조회에 실패했습니다: " + e.getMessage(), null));
         }
     }
 
@@ -68,9 +68,9 @@ public class FeedbackController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<FeedbackResponseDto>> getFeedbackById(@PathVariable String id) {
         Optional<FeedbackResponseDto> feedback = feedbackService.getFeedbackById(id);
-        return feedback.map(response -> ResponseEntity.ok(new ApiResponse<>(true, "피드백을 성공적으로 조회했습니다.", response)))
+        return feedback.map(response -> ResponseEntity.ok(new ApiResponse<>(true, "리뷰를 성공적으로 조회했습니다.", response)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(false, "해당 피드백을 찾을 수 없습니다.", null)));
+                        .body(new ApiResponse<>(false, "해당 리뷰를 찾을 수 없습니다.", null)));
     }
 
     /**
@@ -82,10 +82,10 @@ public class FeedbackController {
         try {
             List<FeedbackResponseDto> feedbacks = feedbackService.getFeedbacksByUserId(userId);
             return ResponseEntity.ok(new ApiResponse<>(true,
-                    "사용자의 피드백을 성공적으로 조회했습니다.", feedbacks));
+                    "사용자의 리뷰를 성공적으로 조회했습니다.", feedbacks));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "사용자별 피드백 조회에 실패했습니다: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "사용자별 리뷰 조회에 실패했습니다: " + e.getMessage(), null));
         }
     }
 
@@ -98,10 +98,10 @@ public class FeedbackController {
         try {
             List<FeedbackResponseDto> feedbacks = feedbackService.getFeedbacksByProductNumber(productNumber);
             return ResponseEntity.ok(new ApiResponse<>(true,
-                    "제품번호 " + productNumber + "의 피드백을 성공적으로 조회했습니다.", feedbacks));
+                    "제품번호 " + productNumber + "의 리뷰를 성공적으로 조회했습니다.", feedbacks));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(false, "제품번호별 피드백 조회에 실패했습니다: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "제품번호별 리뷰 조회에 실패했습니다: " + e.getMessage(), null));
         }
     }
 
@@ -114,10 +114,10 @@ public class FeedbackController {
         try {
             List<FeedbackResponseDto> feedbacks = feedbackService.getFeedbacksByStatus(status);
             return ResponseEntity.ok(new ApiResponse<>(true,
-                    status + " 상태의 피드백을 성공적으로 조회했습니다.", feedbacks));
+                    status + " 상태의 리뷰를 성공적으로 조회했습니다.", feedbacks));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>(false, "상태별 피드백 조회에 실패했습니다: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "상태별 리뷰 조회에 실패했습니다: " + e.getMessage(), null));
         }
     }
 
@@ -130,10 +130,10 @@ public class FeedbackController {
         try {
             List<FeedbackResponseDto> feedbacks = feedbackService.getFeedbacksByPhoneNumber(phoneNumber);
             return ResponseEntity.ok(new ApiResponse<>(true,
-                    phoneNumber + "의 피드백을 성공적으로 조회했습니다.", feedbacks));
+                    phoneNumber + "의 리뷰를 성공적으로 조회했습니다.", feedbacks));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "전화번호별 피드백 조회에 실패했습니다: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "전화번호별 리뷰 조회에 실패했습니다: " + e.getMessage(), null));
         }
     }
 
@@ -147,7 +147,7 @@ public class FeedbackController {
         try {
             FeedbackResponseDto updatedFeedback = feedbackService.updateFeedbackStatus(id, status);
             return ResponseEntity.ok(new ApiResponse<>(true,
-                    "피드백 상태가 성공적으로 업데이트되었습니다.", updatedFeedback));
+                    "리뷰 상태가 성공적으로 업데이트되었습니다.", updatedFeedback));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(false, e.getMessage(), null));
@@ -164,13 +164,13 @@ public class FeedbackController {
     public ResponseEntity<ApiResponse<Void>> deleteFeedback(@PathVariable String id) {
         try {
             feedbackService.deleteFeedback(id);
-            return ResponseEntity.ok(new ApiResponse<>(true, "피드백이 성공적으로 삭제되었습니다.", null));
+            return ResponseEntity.ok(new ApiResponse<>(true, "리뷰가 성공적으로 삭제되었습니다.", null));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>(false, e.getMessage(), null));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "피드백 삭제에 실패했습니다: " + e.getMessage(), null));
+                    .body(new ApiResponse<>(false, "리뷰 삭제에 실패했습니다: " + e.getMessage(), null));
         }
     }
 }
