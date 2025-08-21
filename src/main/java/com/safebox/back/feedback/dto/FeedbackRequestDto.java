@@ -1,5 +1,6 @@
 package com.safebox.back.feedback.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -17,8 +18,9 @@ import jakarta.validation.constraints.Pattern;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FeedbackRequestDto {
-    private Long userId;         // 외래키
     private String productNumber;
+    @JsonProperty("phone")
     private String phoneNumber;
+    @JsonProperty("complaint")
     private String content;
 }
