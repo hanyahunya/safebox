@@ -7,10 +7,12 @@ import com.safebox.back.feedback.entity.FeedbackStatus;
 import com.safebox.back.feedback.repository.FeedbackRepository;
 import com.safebox.back.user.entity.User;
 import com.safebox.back.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,16 +22,11 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class FeedbackService {
 
     private final FeedbackRepository feedbackRepository;
     private final UserRepository userRepository;
-
-    @Autowired
-    public FeedbackService(FeedbackRepository feedbackRepository, UserRepository userRepository) {
-        this.feedbackRepository = feedbackRepository;
-        this.userRepository = userRepository;
-    }
 
     /**
      * 새로운 피드백 저장
