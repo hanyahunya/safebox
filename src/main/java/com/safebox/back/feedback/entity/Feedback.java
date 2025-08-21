@@ -15,12 +15,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Feedback {
 
-    // 피드백 PK (문자열, 커스텀 생성)
     @Id
     @Column(length = 36)
     private String id;
 
-    // User FK (User.id = String UUID)
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false)
     private User user;
@@ -34,20 +32,28 @@ public class Feedback {
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    // ✅ DB 컬럼: ENUM('PENDING','IN_PROGRESS','RESOLVED','CLOSED')
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private FeedbackStatus status = FeedbackStatus.PENDING;
 
+    // ✅ DB 컬럼: ENUM('BUG','SUGGESTION','COMPLAINT','COMPLIMENT','QUESTION','OTHER')
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private FeedbackType type = FeedbackType.OTHER;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    // 생성자
+    // 생성자(필수값 포함)
+
     public Feedback(User user, String productNumber, String phoneNumber, String content) {
         this.user = user;
         this.productNumber = productNumber;
         this.phoneNumber = phoneNumber;
         this.content = content;
         this.status = FeedbackStatus.PENDING;
+        this.type = FeedbackType.OTHER; // ✅ 기본값 보장
     }
 
     // 외래키 반환용 (User PK = String)
@@ -55,11 +61,10 @@ public class Feedback {
         return this.user != null ? this.user.getId() : null;
     }
 
-    // 커스텀 ID 생성
     private String generateCustomId() {
         var formatter = java.time.format.DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         String timestamp = LocalDateTime.now().format(formatter);
-        String randomSuffix = String.format("%06d", (int)(Math.random() * 1000000));
+        String randomSuffix = String.format("%06d", (int) (Math.random() * 1_000_000));
         return "FB" + timestamp + randomSuffix;
     }
 
@@ -68,6 +73,14 @@ public class Feedback {
         if (this.id == null) {
             this.id = generateCustomId();
         }
-        this.createdAt = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        if (this.status == null) {
+            this.status = FeedbackStatus.PENDING;
+        }
+        if (this.type == null) {
+            this.type = FeedbackType.OTHER;
+        }
     }
 }

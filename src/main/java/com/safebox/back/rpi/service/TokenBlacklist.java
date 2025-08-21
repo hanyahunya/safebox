@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 public class TokenBlacklist {
     private final ExpiringMap<String, Boolean> blacklist =
             ExpiringMap.builder()
+                    .variableExpiration()
                     .expirationPolicy(ExpirationPolicy.CREATED)
                     .build();
 

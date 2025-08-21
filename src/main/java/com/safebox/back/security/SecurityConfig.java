@@ -43,12 +43,16 @@ public class SecurityConfig {
                 "/api/user/signup", "/api/user/login",
                 "/api/rpi/arrived/**", "/api/rpi/pickuped/**",
                 "/api/rpi/video/**"
+
+
+                ,"/api/feedback/**"
         };
 
         http
                 .authorizeHttpRequests(authorizeRequests ->
                                 authorizeRequests
                                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                        .requestMatchers(HttpMethod.POST, "/api/feedback").authenticated()
                                         .requestMatchers(whitelist).permitAll()
                                         .requestMatchers(HttpMethod.POST, "/api/rpi/stolen/**").permitAll()
 //                                .anyRequest().permitAll() // --임시설정-- ( 모든 요청 허용 )
